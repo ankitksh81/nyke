@@ -41,8 +41,5 @@ jobs:
         if: matrix.latest
         run: make lint
 
-      - name: Test
-        run: make cover
-
       - name: Benchmark
         run: make bench
