@@ -13,16 +13,11 @@ import (
 )
 
 func main() {
-	// Initialize Viper across the application
-	configs.InitializeViper()
 
-	// Initialize Logger across the application
-	logger.InitializeZapCustomLogger()
+	configs.InitializeViper()          // Initialize Viper across the application
+	logger.InitializeZapCustomLogger() // Initialize Logger across the application
+	auth.InitializeOAuthGoogle()       // Initialize Oauth2 Services
 
-	// Initialize Oauth2 Services
-	auth.InitializeOAuthGoogle()
-
-	// Routes for the application
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", auth.HandleMain)
