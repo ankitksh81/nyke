@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -37,8 +38,12 @@ func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	HandleLogin(w, r, oauthConfigGl, oauthStateStringGl)
 }
 
-// CallBackFromGoogle Function
+type Response struct {
+	Id    string `json:"id"`
+	Email string `json:"email"`
+}
 
+// CallBackFromGoogle Function
 func CallBackFromGoogle(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("Callback-gl..")
 
@@ -87,7 +92,11 @@ func CallBackFromGoogle(w http.ResponseWriter, r *http.Request) {
 
 		logger.Log.Info("parseResponseBody: " + string(response) + "\n")
 
-		w.Write([]byte("Hello, I'm protected\n"))
+		var responseObj Response
+		json.Unmarshal(response, &responseObj)
+
+		// w.Write([]byte(string(responseObj.Id)))
+		// w.Write([]byte(string("Email: " + responseObj.Email)))
 		w.Write([]byte(string(response)))
 		return
 	}
