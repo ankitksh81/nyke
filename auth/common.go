@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ankitksh81/nyke/Auth/helper/pages"
+	"github.com/ankitksh81/nyke/auth/helper/pages"
 	"github.com/ankitksh81/nyke/logger"
 	"golang.org/x/oauth2"
 )
