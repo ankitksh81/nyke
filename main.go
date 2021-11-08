@@ -17,18 +17,24 @@ import (
 
 func main() {
 
-	configs.InitializeViper()          // Initialize Viper across the application
-	logger.InitializeZapCustomLogger() // Initialize Logger across the application
-	auth.InitializeOAuthGoogle()       // Initialize Oauth2 Services
+	/* Initialize Viper across the application */
+	configs.InitializeViper()
 
+	/* Initialize Logger across the application */
+	logger.InitializeZapCustomLogger()
+
+	/* Initialize Oauth2.0 service */
+	auth.InitializeOAuthGoogle()
+
+	/* Create connection to the database */
 	middleware.CreateConnection() // Create db connection
 
 	router := mux.NewRouter()
 
 	// Initialize CORS for the application
 	c := cors.New(cors.Options{
-		AllowedHeaders:   []string{"X-Requested-With"},
-		AllowedOrigins:   []string{"http://localhost:8080"},
+		AllowedHeaders:   []string{"X-Requested-With", "*"},
+		AllowedOrigins:   []string{"http://localhost:8080", "http://localhost:3000", "*"},
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
 		AllowCredentials: true,
 	})

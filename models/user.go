@@ -1,11 +1,8 @@
 package models
 
-import (
-	"github.com/google/uuid"
-)
-
 type User struct {
-	UserID      uuid.UUID `pg:"type:uuid,default:uuid_generate_v4()"`
-	Email       string    `json:"email,omitempty"`
-	PictureLink string    `json:"picture_link"`
+	Email     string `json:"email,omitempty" schema:"email, required"`
+	FirstName string `json:"first_name,omitempty" schema:"email, required"`
+	LastName  string `json:"last_name,omitempty" schema:"email, required"`
+	Picture   string `json:"user_picture" json:"-" schema:"user_picture"`
 }
