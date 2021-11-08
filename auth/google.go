@@ -7,6 +7,8 @@ import (
 	"net/url"
 
 	"github.com/ankitksh81/nyke/logger"
+	"github.com/ankitksh81/nyke/middleware"
+	"github.com/ankitksh81/nyke/models"
 
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -92,12 +94,10 @@ func CallBackFromGoogle(w http.ResponseWriter, r *http.Request) {
 
 		logger.Log.Info("parseResponseBody: " + string(response) + "\n")
 
-		var responseObj Response
-		json.Unmarshal(response, &responseObj)
-
-		// w.Write([]byte(string(responseObj.Id)))
-		// w.Write([]byte(string("Email: " + responseObj.Email)))
-		w.Write([]byte(string(response)))
+		var authRes models.AuthResponse
+		json.Unmarshal(response, &authRes)
+		middleware.RegisterFromAuth(w, &authRes)
+		// w.Write([]byte(string(response)))
 		return
 	}
 }
