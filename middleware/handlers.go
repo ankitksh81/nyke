@@ -38,6 +38,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	/* Inserting data in database */
 	sqlQuery := `INSERT INTO users(email, first_name, last_name, user_picture) VALUES ($1, $2, $3, $4) RETURNING user_id`
 
 	var id string
@@ -67,19 +68,19 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("UUID returned: " + id)
 }
 
+/* Register user using OAuth2.0 */
 func RegisterFromAuth(w http.ResponseWriter, authRes *models.AuthResponse) {
 	var user models.User
 
 	/* Getting details from OAuth2.0 response */
-
-	user_fullName := authRes.Name
-	name := strings.Split(user_fullName, " ")
+	name := strings.Split(authRes.Name, " ")
 
 	user.Email = authRes.Email
 	user.FirstName = name[0]
 	user.LastName = name[1]
 	user.Picture = authRes.UserPicture
 
+	/* Inserting data in database */
 	sqlQuery := `INSERT INTO users(email, first_name, last_name, user_picture) VALUES ($1, $2, $3, $4) RETURNING user_id`
 
 	var id string
