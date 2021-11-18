@@ -27,7 +27,7 @@ func main() {
 	auth.InitializeOAuthGoogle()
 
 	/* Create connection to the database */
-	middleware.CreateConnection() // Create db connection
+	go middleware.CreateConnection() // Create db connection
 
 	router := mux.NewRouter()
 
