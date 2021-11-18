@@ -5,4 +5,5 @@ type User struct {
 	FirstName string `json:"first_name,omitempty" schema:"first_name, required"`
 	LastName  string `json:"last_name,omitempty" schema:"last_name, required"`
 	Picture   string `json:"user_picture" json:"-" schema:"user_picture"`
+	Password  string `json:"password" json:"-" schema:"password"`
 }
