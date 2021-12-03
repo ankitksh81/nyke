@@ -2,13 +2,10 @@ package middleware
 
 import (
 	"encoding/json"
-	"errors"
-	"log"
 	"net/http"
 
 	"github.com/ankitksh81/nyke/logger"
 	"github.com/ankitksh81/nyke/models"
-	"github.com/gorilla/schema"
 )
 
 /* Register user using registration form */
@@ -16,26 +13,9 @@ func RegisterFromForm(w http.ResponseWriter, r *http.Request) {
 	// create an empty user of type models.User
 	var user models.User
 
-	var decoder = schema.NewDecoder()
-
-	// Checking headers
-	contentType := r.Header.Get("Content-Type")
-	if contentType == "application/x-www-form-urlencoded" {
-		err := r.ParseForm()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = decoder.Decode(&user, r.PostForm)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if contentType == "application/json" {
-		// decode the json request to user
-		err := json.NewDecoder(r.Body).Decode(&user)
-		if err != nil {
-			logger.Log.Error("Unable to decode the request body. " + err.Error())
-		}
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		logger.Log.Error("Unable to decode the request body. " + err.Error())
 	}
 
 	hashedPassword, err := HashPassword(user.Password)
@@ -50,7 +30,9 @@ func RegisterFromForm(w http.ResponseWriter, r *http.Request) {
 
 	err = DB.QueryRow(sqlQuery, user.Email, user.FirstName, user.LastName, hashedPassword).Scan(&user_id)
 	if err != nil {
-		errMsg := errors.New(err.Error())
+
+		errMsg := err.Error()
+
 		json.NewEncoder(w).Encode(errMsg)
 		logger.Log.Error("Unable to execute the query " + err.Error())
 	}
@@ -58,15 +40,21 @@ func RegisterFromForm(w http.ResponseWriter, r *http.Request) {
 	/* json response object */
 	var res models.Response
 
-	res.ID = user_id
-	res.Email = user.Email
-	res.FirstName = user.FirstName
-	res.LastName = user.LastName
-	res.UserPicture = user.Picture
+	res.User.ID = user_id
+	res.User.Email = user.Email
+	res.User.FirstName = user.FirstName
+	res.User.LastName = user.LastName
+	res.User.UserPicture = user.Picture
+	res.JwtToken, err = GenerateJWT(user_id)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		http.Error(w, err.Error(), 500)
+	}
 
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		logger.Log.Error(err.Error())
+		// w.WriteHeader(http.StatusInternalServerError)
 		http.Error(w, err.Error(), 500)
 	}
 
