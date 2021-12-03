@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -35,11 +37,18 @@ func RegisterFromAuth(w http.ResponseWriter, authRes *models.AuthResponse) {
 	/* json response object */
 	var res models.Response
 
-	res.ID = user_id
-	res.Email = user.Email
-	res.FirstName = user.FirstName
-	res.LastName = user.LastName
-	res.UserPicture = user.Picture
+	res.User.ID = user_id
+	res.User.Email = user.Email
+	res.User.FirstName = user.FirstName
+	res.User.LastName = user.LastName
+	res.User.UserPicture = user.Picture
+
+	token, err := GenerateJWT(user_id)
+	if err != nil {
+		log.Printf("Error generating jwt token, %s", err.Error())
+	}
+
+	fmt.Println("JWT token: " + token)
 
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
@@ -47,5 +56,5 @@ func RegisterFromAuth(w http.ResponseWriter, authRes *models.AuthResponse) {
 		http.Error(w, err.Error(), 500)
 	}
 
-	logger.Log.Info("UUID returned: " + user_id)
+	// logger.Log.Info("UUID returned: " + user_id)
 }
