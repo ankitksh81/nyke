@@ -48,3 +48,10 @@ func ErrorUserExist(w http.ResponseWriter) {
 	}
 	JSONError(w, err, 409)
 }
+
+func ErrorUnauthorized(w http.ResponseWriter) {
+	err := &models.Error{
+		Message: "You are not authorized!",
+	}
+	JSONError(w, err, 401)
+}
