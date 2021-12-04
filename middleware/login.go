@@ -13,56 +13,39 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&user)
 
 	if user.Email == "" {
-		err := &models.Error{
-			Message: "Email cannot be empty",
-		}
-		http.Error(w, err.Message, 400)
+		ErrorEmptyInput(w, "Email")
 		return
 	}
 
 	if user.Password == "" {
-		err := &models.Error{
-			Message: "Password cannot be empty",
-		}
-		http.Error(w, err.Message, 400)
+		ErrorEmptyInput(w, "Password")
 		return
 	}
 
-	sqlQuery := `SELECT password, user_id FROM users WHERE email = $1`
+	sqlQuery := `SELECT password, user_id FROM users 
+			WHERE email = $1`
 
 	row := DB.QueryRow(sqlQuery, user.Email)
 	var password_hash, user_id string
 	err := row.Scan(&password_hash, &user_id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			err := &models.Error{
-				Message: "Email is incorrect",
-			}
-			http.Error(w, err.Message, 404)
+			ErrorUserNotFound(w)
 		} else {
-			err := &models.Error{
-				Message: "Internal server error",
-			}
-			http.Error(w, err.Message, 500)
+			Error500(w)
 		}
 		return
 	}
 
-	ok := CheckPasswordHash(user.Password, password_hash)
-	if !ok {
-		err := &models.Error{
-			Message: "Password is incorrect",
-		}
-		http.Error(w, err.Message, 401)
+	err = CheckPasswordHash(user.Password, password_hash)
+	if err != nil {
+		ErrorWrongPassword(w)
 		return
 	}
 
 	jwtToken, err := GenerateJWT(user_id)
 	if err != nil {
-		err := &models.Error{
-			Message: "Internal server error",
-		}
-		http.Error(w, err.Message, 500)
+		Error500(w)
 		return
 	}
 
