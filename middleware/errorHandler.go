@@ -21,6 +21,13 @@ func Error500(w http.ResponseWriter) {
 	JSONError(w, err, 500)
 }
 
+func Error404(w http.ResponseWriter) {
+	err := &models.Error{
+		Message: "The resource you are looking for does not exist!",
+	}
+	JSONError(w, err, 404)
+}
+
 func ErrorWrongPassword(w http.ResponseWriter) {
 	err := &models.Error{
 		Message: "Incorrect password!",
