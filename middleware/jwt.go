@@ -54,7 +54,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			})
 			if err != nil {
 				errMsg := &models.Error{
-					Message: "Your token has been expired!",
+					Message: "Login token has been expired!",
 				}
 				JSONError(w, errMsg, 401)
 				logger.Log.Error("Token Error: " + err.Error())
