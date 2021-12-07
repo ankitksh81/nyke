@@ -11,13 +11,12 @@ import (
 )
 
 // HandleLogin function
-
 func HandleLogin(w http.ResponseWriter, r *http.Request, oauthConfig *oauth2.Config, oauthStateString string) {
 	URL, err := url.Parse(oauthConfig.Endpoint.AuthURL)
 	if err != nil {
 		logger.Log.Error("Parse: " + err.Error())
 	}
-	logger.Log.Info(URL.String())
+	// logger.Log.Info(URL.String())
 	parameters := url.Values{}
 	parameters.Add("client_id", oauthConfig.ClientID)
 	parameters.Add("scope", strings.Join(oauthConfig.Scopes, " "))
@@ -27,12 +26,11 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, oauthConfig *oauth2.Con
 
 	URL.RawQuery = parameters.Encode()
 	url := URL.String()
-	logger.Log.Info(url)
+	// logger.Log.Info(url)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // HandleMain function renders the index page when the index route is called
-
 func HandleMain(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
