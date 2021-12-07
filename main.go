@@ -17,17 +17,18 @@ import (
 
 func main() {
 
-	/* Initialize Viper across the application */
+	// Initialize Viper
 	configs.InitializeViper()
 
-	/* Initialize Logger across the application */
+	// Initialize Logger across
+
 	logger.InitializeZapCustomLogger()
+	// Initialize Oauth2.0 service
 
-	/* Initialize Oauth2.0 service */
 	auth.InitializeOAuthGoogle()
+	// Create connection to the database
 
-	/* Create connection to the database */
-	db := middleware.CreateConnection() // Create db connection
+	db := middleware.InitDB()
 	defer db.Close()
 
 	router := mux.NewRouter()
