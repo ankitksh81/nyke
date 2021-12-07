@@ -14,6 +14,7 @@ func SetupRoutes(r *mux.Router) {
 	r.HandleFunc("/callback", auth.CallBackFromGoogle)
 
 	// Database related routes
-	r.HandleFunc("/api/register", middleware.Register)
-
+	r.HandleFunc("/api/register", middleware.RegisterFromForm).Methods("POST")
+	r.HandleFunc("/products", middleware.SendProducts).Methods("GET")
+	r.HandleFunc("/api/login", middleware.Login).Methods("POST")
 }
