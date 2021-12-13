@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,4 +16,9 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err
+}
+
+// Function to set content JSON
+func SetContentJSON(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 }
