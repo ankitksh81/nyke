@@ -4,81 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strings"
+	"regexp"
+	"unicode"
 
 	"github.com/ankitksh81/nyke/logger"
 	"github.com/ankitksh81/nyke/models"
 )
 
-// Register user using registration form
-func RegisterFromForm(w http.ResponseWriter, r *http.Request) {
-	// user model
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		Error500(w)
-		logger.Log.Error("Unable to decode the request body. " + err.Error())
-		return
-	}
-
-	// check if user already exist
-	found, err := CheckUserExist(user.Email, w)
-	if err != nil {
-		Error500(w)
-		return
-	} else if found {
-		ErrorUserExist(w)
-		return
-	}
-
-	hashedPassword, err := HashPassword(user.Password)
-	if err != nil {
-		Error500(w)
-		logger.Log.Error("Unable to hash the password. " + err.Error())
-		return
-	}
-
-	// Insert data in database
-	sqlQuery := `INSERT INTO users(email, first_name, last_name, password) 
-			VALUES ($1, $2, $3, $4) RETURNING user_id`
-
-	var user_id string
-	err = DB.QueryRow(sqlQuery, user.Email, user.FirstName, user.LastName, hashedPassword).Scan(&user_id)
-	if err != nil {
-		Error500(w)
-		logger.Log.Error("Unable to execute the query " + err.Error())
-		return
-	}
-
-	GenerateResponse(w, &user, user_id)
-}
-
-// Register user using OAuth2
-func RegisterFromAuth(w http.ResponseWriter, authRes *models.AuthResponse) {
-	// Getting details from OAuth2.0 response
-	name := strings.Split(authRes.Name, " ")
-	user := &models.User{
-		Email:     authRes.Email,
-		FirstName: name[0],
-		LastName:  name[1],
-		Picture:   authRes.UserPicture,
-	}
-
-	// Insert data in database
-	sqlQuery := `INSERT INTO users(email, first_name, last_name, user_picture) 
-			VALUES ($1, $2, $3, $4) RETURNING user_id`
-
-	var user_id string
-	err := DB.QueryRow(sqlQuery, user.Email, user.FirstName, user.LastName, user.Picture).Scan(&user_id)
-	if err != nil {
-		Error500(w)
-		logger.Log.Error("Unable to execute the query " + err.Error())
-		return
-	}
-
-	GenerateResponse(w, user, user_id)
-}
-
+// generate json response with jwt token
 func GenerateResponse(w http.ResponseWriter, user *models.User, user_id string) {
 
 	token_string, err := GenerateJWT(user_id)
@@ -107,7 +40,8 @@ func GenerateResponse(w http.ResponseWriter, user *models.User, user_id string) 
 	}
 }
 
-func CheckUserExist(email string, w http.ResponseWriter) (bool, error) {
+// check if user exists
+func CheckUserExist(email string) (bool, error) {
 	sqlQuery := `SELECT user_id FROM users WHERE email = $1`
 
 	row := DB.QueryRow(sqlQuery, email)
@@ -117,11 +51,43 @@ func CheckUserExist(email string, w http.ResponseWriter) (bool, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
-		} else {
-			Error500(w)
 		}
 		return false, err
 	}
 
 	return true, nil
+}
+
+// Check if email is valid
+func IsEmailValid(e string) bool {
+	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return emailRegex.MatchString(e)
+}
+
+// Check if password is valid
+func IsPasswordValid(p string) bool {
+	var (
+		hasMinLen  = false
+		hasUpper   = false
+		hasLower   = false
+		hasNumber  = false
+		hasSpecial = false
+	)
+	if len(p) >= 7 {
+		hasMinLen = true
+	}
+
+	for _, char := range p {
+		switch {
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsNumber(char):
+			hasNumber = true
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			hasSpecial = true
+		}
+	}
+	return hasMinLen && hasUpper && hasLower && hasNumber && hasSpecial
 }
