@@ -24,4 +24,7 @@ func SetupRoutes(r *mux.Router) {
 	// products routes
 	r.HandleFunc("/products", api.GetProducts).Methods("GET")
 	r.HandleFunc("/product/{id}", api.GetProductByID).Methods("GET")
+
+	// car routes
+	r.HandleFunc("/cart/add", api.AddItemToCart).Methods("POST")
 }
