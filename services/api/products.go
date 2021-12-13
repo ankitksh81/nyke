@@ -65,7 +65,7 @@ func GetProductByID(w http.ResponseWriter, r *http.Request) {
 	product_id := params["id"]
 
 	// call getProduct function with product_id
-	prod, err := getProductByID(product_id)
+	prod, err := GetProductByIDHandler(product_id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No product found with id: ", product_id)
@@ -79,7 +79,7 @@ func GetProductByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(prod)
 }
 
-func getProductByID(product_id string) (models.Product, error) {
+func GetProductByIDHandler(product_id string) (models.Product, error) {
 	sqlQuery := `SELECT * FROM products WHERE product_id = $1`
 	row := middleware.DB.QueryRow(sqlQuery, product_id)
 
