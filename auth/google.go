@@ -114,7 +114,7 @@ func CallBackFromGoogle(w http.ResponseWriter, r *http.Request) {
 
 		// if user not found, register the user
 		if !userFound {
-			api.RegisterAuth(w, &authRes)
+			api.CreateAuthUser(w, &authRes)
 		} else {
 			sqlQuery := `SELECT user_id FROM users WHERE email = $1`
 			var user_id string
