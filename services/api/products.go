@@ -1,11 +1,15 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/ankitksh81/nyke/logger"
 	"github.com/ankitksh81/nyke/middleware"
 	"github.com/ankitksh81/nyke/models"
+	"github.com/gorilla/mux"
 )
 
 // Function to send products as json
@@ -17,6 +21,7 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	middleware.SetContentJSON(w)
 	err = json.NewEncoder(w).Encode(products)
 	if err != nil {
 		middleware.Error500(w)
@@ -50,4 +55,42 @@ func GetProductsHandler() (prod []models.Product, err error) {
 	}
 
 	return products, nil
+}
+
+// get product by product_id
+// @ /product/{id}
+func GetProductByID(w http.ResponseWriter, r *http.Request) {
+	middleware.SetContentJSON(w)
+	params := mux.Vars(r)
+	product_id := params["id"]
+
+	// call getProduct function with product_id
+	prod, err := getProductByID(product_id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("No product found with id: ", product_id)
+			middleware.Error404(w)
+		} else {
+			middleware.Error500(w)
+		}
+		logger.Log.Error("Could not get product by id. " + err.Error())
+		return
+	}
+	json.NewEncoder(w).Encode(prod)
+}
+
+func getProductByID(product_id string) (models.Product, error) {
+	sqlQuery := `SELECT * FROM products WHERE product_id = $1`
+	row := middleware.DB.QueryRow(sqlQuery, product_id)
+
+	// An product to hold data from returned row.
+	var product models.Product
+
+	// Scan row into product
+	err := row.Scan(&product.ID, &product.Name, &product.Price,
+		&product.ProductPicture)
+	if err != nil {
+		return product, err
+	}
+	return product, nil
 }
