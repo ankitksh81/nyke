@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/ankitksh81/nyke/logger"
 	"github.com/ankitksh81/nyke/middleware"
@@ -12,8 +13,9 @@ import (
 )
 
 // create user endpoint
-// api: /api/register
+// @ /api/register
 func CreateUser(w http.ResponseWriter, r *http.Request) {
+	middleware.SetContentJSON(w)
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -33,23 +35,34 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	/*
 		// validate password
-		if !isPasswordValid(user.Password) {
+		if !middleware.IsPasswordValid(user.Password) {
 			err := &models.Error{
 				Message: "Password doesn't follow the rules.",
 			}
-			JSONError(w, err, 400)
+			middleware.JSONError(w, err, 400)
 			return
 		}
 	*/
 
 	// check if user already exist
-	found, err := middleware.CheckUserExist(user.Email, w)
+	found, err := middleware.CheckUserExist(user.Email)
 	if err != nil {
 		middleware.Error500(w)
 		return
 	} else if found {
-		middleware.ErrorUserExist(w)
-		return
+		passwordSet, err := isPasswordSet(user.Email)
+		if err != nil {
+			middleware.Error500(w)
+			return
+		} else if !passwordSet {
+			// do something
+			middleware.SetContentJSON(w)
+			json.NewEncoder(w).Encode("Set a new password")
+			return
+		} else {
+			middleware.ErrorUserExist(w)
+			return
+		}
 	}
 
 	hashedPassword, err := middleware.HashPassword(user.Password)
@@ -71,13 +84,26 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Error("Unable to execute the query " + err.Error())
 		return
 	}
-
 	middleware.GenerateResponse(w, &user, user_id)
 }
 
-// get user with user_id endpoint
-// api: /api/user/{id}
+func isPasswordSet(e string) (bool, error) {
+	sqlQuery := `SELECT password FROM users WHERE email=$1`
+	var password sql.NullString
+	err := middleware.DB.QueryRow(sqlQuery, e).Scan(&password)
+	if err != nil {
+		logger.Log.Error("Query Error: " + err.Error())
+		return false, err
+	} else if !password.Valid {
+		return false, nil
+	}
+	return true, nil
+}
+
+// get user by user_id endpoint
+// @ /api/user/{id}
 func GetUser(w http.ResponseWriter, r *http.Request) {
+	middleware.SetContentJSON(w)
 	// get the userid from the request params, key is "id"
 	params := mux.Vars(r)
 	user_id := params["id"]
@@ -93,7 +119,6 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Error("Could not get user from the database. " + err.Error())
 		return
 	}
-
 	json.NewEncoder(w).Encode(user)
 }
 
@@ -114,4 +139,31 @@ func getUser(id string) (models.ResponseUser, error) {
 	return user, nil
 }
 
+// create user using oauth
+func CreateAuthUser(w http.ResponseWriter, authRes *models.AuthResponse) {
+	middleware.SetContentJSON(w)
+	// Getting details from OAuth2.0 response
+	name := strings.Split(authRes.Name, " ")
+	user := &models.User{
+		Email:     authRes.Email,
+		FirstName: name[0],
+		LastName:  name[1],
+		Picture:   authRes.UserPicture,
+	}
+
+	// Insert data in database
+	sqlQuery := `INSERT INTO users(email, first_name, last_name, user_picture) 
+			VALUES ($1, $2, $3, $4) RETURNING user_id`
+
+	var user_id string
+	err := middleware.DB.QueryRow(sqlQuery, user.Email, user.FirstName, user.LastName, user.Picture).Scan(&user_id)
+	if err != nil {
+		middleware.Error500(w)
+		logger.Log.Error("Unable to execute the query " + err.Error())
+		return
+	}
+	middleware.GenerateResponse(w, user, user_id)
+}
+
 // login user using oauth
+// login user using password
