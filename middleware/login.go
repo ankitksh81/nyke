@@ -8,7 +8,12 @@ import (
 	"github.com/ankitksh81/nyke/models"
 )
 
+type JwtToken struct {
+	Token string `json:"token"`
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
+	SetContentJSON(w)
 	var user models.UserLogin
 	json.NewDecoder(r.Body).Decode(&user)
 
@@ -49,5 +54,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(jwtToken)
+	token := &JwtToken{
+		Token: jwtToken,
+	}
+	json.NewEncoder(w).Encode(token)
+}
+
+func ProtectedEndpoint(w http.ResponseWriter, r *http.Request) {
+	SetContentJSON(w)
+	message := "You are authenticated!"
+	json.NewEncoder(w).Encode(message)
 }
